@@ -1,0 +1,215 @@
+# 🚀 Installation complète d’Arch Linux + Hyprland
+> Guide détaillé et commenté pour la configuration manuelle complète du système.
+
+---
+
+## 🟢 Partie 1 : Installation d’Arch Linux
+
+### 🔧 Préparation du clavier
+```bash
+localectl list-keymaps
+```
+*Affiche la liste des dispositions clavier disponibles.*
+
+```bash
+loadkeys de-latin1
+```
+*Charge le clavier allemand (remplacez par `fr` pour azerty français).*
+
+---
+
+### 💾 Partitionnement et formatage du disque
+```bash
+fdisk YOUR_BLOCK_DEVICE
+```
+*Lance l’outil de partitionnement pour créer vos partitions EFI, root et swap.*
+
+```bash
+mkfs.fat -F32 ESP_BLOCK_DEVICE
+```
+*Formate la partition EFI en FAT32 (obligatoire pour UEFI).*
+
+```bash
+mkfs.ext4 ROOT_BLOCK_DEVICE
+```
+*Formate la partition principale en ext4.*
+
+```bash
+mount ROOT_BLOCK_DEVICE /mnt
+mount --mkdir ESP_BLOCK_DEVICE /mnt/boot
+```
+*Monte les partitions EFI et root sur le système cible.*
+
+---
+
+### 🌐 Configuration réseau et miroirs
+```bash
+ping google.com
+```
+*Teste la connexion Internet.*
+
+```bash
+pacman -S reflector
+reflector --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
+pacman -Syy
+```
+*Installe Reflector pour choisir les meilleurs miroirs et actualise la base de paquets.*
+
+---
+
+### 🧱 Installation du système de base
+```bash
+pacstrap -K /mnt base linux linux-firmware
+```
+*Installe le noyau Linux, les paquets de base et les firmwares.*
+
+```bash
+genfstab -U /mnt >> /mnt/etc/fstab
+```
+*Génère le fichier fstab pour le montage automatique des partitions.*
+
+```bash
+arch-chroot /mnt
+```
+*Entre dans le nouveau système Arch pour la configuration.*
+
+---
+
+### ⚙️ Configuration du système
+```bash
+mkswap -U clear --size 16G --file /swapfile
+swapon /swapfile
+```
+*Crée et active un fichier swap de 16 Go.*
+
+```bash
+timedatectl list-timezones
+timedatectl set-timezone Europe/Paris
+hwclock --systohc
+```
+*Configure le fuseau horaire et synchronise l’horloge matérielle.*
+
+```bash
+nano /etc/locale.gen
+locale-gen
+echo LANG=fr_FR.UTF-8 > /etc/locale.conf
+```
+*Active la langue française pour le système.*
+
+```bash
+echo ArchLinux > /etc/hostname
+passwd
+```
+*Définit le nom d’hôte et le mot de passe root.*
+
+---
+
+### 👤 Création d’un utilisateur
+```bash
+useradd -m djatten
+passwd djatten
+usermod -aG wheel,audio,video,storage djatten
+```
+*Crée un utilisateur, définit un mot de passe et lui donne les permissions nécessaires.*
+
+```bash
+visudo
+```
+*Permet d’activer les droits `sudo` pour le groupe `wheel`.*
+
+---
+
+### 🧩 Installation du chargeur de démarrage (GRUB)
+```bash
+pacman -S grub efibootmgr
+mount ESP_BLOCK_DEVICE /boot/efi
+grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi
+grub-mkconfig -o /boot/grub/grub.cfg
+```
+*Installe et configure GRUB pour démarrer le système Arch.*
+
+```bash
+systemctl enable NetworkManager
+systemctl enable iwd
+```
+*Active les services réseau.*
+
+```bash
+exit
+umount -R /mnt
+reboot
+```
+*Quitte le chroot, démonte et redémarre le système.*
+
+---
+
+## 🟣 Partie 2 : Installation et configuration de Hyprland
+
+### 🔄 Mise à jour et installation d’outils
+```bash
+sudo pacman -Syy
+```
+*Met à jour la base de données des paquets.*
+
+```bash
+git clone https://aur.archlinux.org/yay.git
+cd yay
+makepkg -si
+```
+*Installe `yay`, un gestionnaire de paquets pour les dépôts AUR.*
+
+---
+
+### 🧰 Installation des composants essentiels
+```bash
+sudo pacman -S firefox alacritty dolphin pipewire wireplumber pipewire-audio pipewire-pulse dunst xdg-desktop-portal-hyprland hyprpolkitagent hyprpaper hyprlock hypridle qt5-wayland qt6-wayland waybar rofi feh kvantum qt5ct qt6ct nwg-look bluez bluez-utils blueman sof-firmware wl-clipboard sddm
+```
+*Installe les outils nécessaires pour l’environnement Hyprland et le support Wayland.*
+
+```bash
+sudo systemctl enable sddm
+sudo systemctl enable bluetooth
+```
+*Active le gestionnaire de session graphique et le Bluetooth.*
+
+---
+
+### 🎨 Thèmes et utilitaires
+```bash
+yay -S grimblast-git visual-studio-code-bin spotify downgrade
+```
+*Installe quelques outils utiles et applications populaires.*
+
+```bash
+git clone https://github.com/vinceliuice/Tela-circle-icon-theme.git
+cd Tela-circle-icon-theme/
+./install -n standard
+```
+*Ajoute un thème d’icônes moderne.*
+
+---
+
+### ⚙️ Optimisation et gestion d’énergie
+```bash
+sudo pacman -S tlp
+sudo systemctl enable --now tlp
+```
+*Installe TLP pour améliorer la gestion d’énergie sur laptop.*
+
+```bash
+sudo nano /etc/systemd/logind.conf
+```
+*Permet d’ajuster les comportements de mise en veille et d’alimentation.*
+
+---
+
+### 🧩 Lancement et vérification
+```bash
+hyprctl monitors | grep Monitor
+Hyprland
+```
+*Vérifie les écrans détectés puis lance l’environnement Hyprland.*
+
+---
+
+✅ **Félicitations !** Vous disposez maintenant d’un système Arch Linux fonctionnel avec l’environnement Hyperland configuré à la main.
